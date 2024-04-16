@@ -3,11 +3,12 @@ import pandas as pd
 
 
 class MyKNNClf:
-    def __init__(self, k=3):
+    def __init__(self, k=3, metric='euclidean'):
         self.k = k
         self.train_size = None
         self.X, self.y = None, None
         self.size = None
+        self.metric = metric
 
     def __str__(self):
         return self.train_size
@@ -31,7 +32,18 @@ class MyKNNClf:
         X = pd.DataFrame(data, index=[0])
         X = pd.concat([X] * self.size, ignore_index=True)
         X.columns = list(self.X.columns)
-        evD = pd.DataFrame(np.sqrt(((self.X.reset_index(drop=True) - X) ** 2).sum(axis=1)))
+        if self.metric == 'euclidean':
+            evD = pd.DataFrame(np.sqrt(((self.X.reset_index(drop=True) - X) ** 2).sum(axis=1)))
+        elif self.metric == 'chebyshev':
+            evD = pd.DataFrame((self.X.reset_index(drop=True) - X).abs().max(axis=1))
+            evD = evD.reset_index(drop=True)
+        elif self.metric == 'manhattan':
+            evD = pd.DataFrame((self.X.reset_index(drop=True) - X).abs().sum(axis=1))
+            evD = evD.reset_index(drop=True)
+        else:
+            evD = pd.DataFrame(1 - ((self.X.reset_index(drop=True) * X).sum(axis=1) / (
+                        np.sqrt((X ** 2).sum(axis=1)) * np.sqrt((self.X.reset_index(drop=True) ** 2).sum(axis=1)))))
+            evD = evD.reset_index(drop=True)
         evD.columns = ['bD']
         evD['y'] = self.y.reset_index(drop=True)
         result = evD.sort_values(by='bD').reset_index(drop=True).iloc[:self.k]['y'].mode()
@@ -44,7 +56,18 @@ class MyKNNClf:
         X = pd.DataFrame(data, index=[0])
         X = pd.concat([X] * self.size, ignore_index=True)
         X.columns = list(self.X.columns)
-        evD = pd.DataFrame(np.sqrt(((self.X.reset_index(drop=True) - X) ** 2).sum(axis=1)))
+        if self.metric == 'euclidean':
+            evD = pd.DataFrame(np.sqrt(((self.X.reset_index(drop=True) - X) ** 2).sum(axis=1)))
+        elif self.metric == 'chebyshev':
+            evD = pd.DataFrame((self.X.reset_index(drop=True) - X).abs().max(axis=1))
+            evD = evD.reset_index(drop=True)
+        elif self.metric == 'manhattan':
+            evD = pd.DataFrame((self.X.reset_index(drop=True) - X).abs().sum(axis=1))
+            evD = evD.reset_index(drop=True)
+        else:
+            evD = pd.DataFrame(1 - ((self.X.reset_index(drop=True) * X).sum(axis=1) / (
+                        np.sqrt((X ** 2).sum(axis=1)) * np.sqrt((self.X.reset_index(drop=True) ** 2).sum(axis=1)))))
+            evD = evD.reset_index(drop=True)
         evD.columns = ['bD']
         evD['y'] = self.y.reset_index(drop=True)
         result = evD.sort_values(by='bD').reset_index(drop=True).iloc[:self.k]['y']
