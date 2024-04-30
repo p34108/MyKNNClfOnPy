@@ -95,18 +95,34 @@ class MyKNNClf:
         X = pd.concat([X] * self.size, ignore_index=True)
         X.columns = list(self.X.columns)
         if self.metric == 'euclidean':
-            evD = pd.DataFrame(np.sqrt(((self.X.reset_index(drop=True) - X) ** 2).sum(axis=1)))
+            evD = self.euclidean_distance(self.X, X)
         elif self.metric == 'chebyshev':
-            evD = pd.DataFrame((self.X.reset_index(drop=True) - X).abs().max(axis=1))
-            evD = evD.reset_index(drop=True)
+            evD = self.chebyshev_distance(self.X, X)
         elif self.metric == 'manhattan':
-            evD = pd.DataFrame((self.X.reset_index(drop=True) - X).abs().sum(axis=1))
-            evD = evD.reset_index(drop=True)
+            evD = self.manhattan_distance(self.X, X)
         else:
-            evD = pd.DataFrame(1 - ((self.X.reset_index(drop=True) * X).sum(axis=1) / (
-                    np.sqrt((X ** 2).sum(axis=1)) * np.sqrt((self.X.reset_index(drop=True) ** 2).sum(axis=1)))))
-            evD = evD.reset_index(drop=True)
+            evD = self.cosine_distance(self.X, X)
         evD.columns = ['bD']
         evD['y'] = self.y.reset_index(drop=True)
         result = evD.sort_values(by='bD').reset_index(drop=True).iloc[:self.k]['y']
         return list(result).count(1) / len(list(result))
+
+    def euclidean_distance(self, X_true, X):
+        X_result = pd.DataFrame(np.sqrt(((X_true.reset_index(drop=True) - X) ** 2).sum(axis=1)))
+        return X_result
+
+    def chebyshev_distance(self, X_true, X):
+        X_result = pd.DataFrame((X_true.reset_index(drop=True) - X).abs().max(axis=1))
+        X_result = X_result.reset_index(drop=True)
+        return X_result
+
+    def manhattan_distance(self, X_true, X):
+        X_result = pd.DataFrame((X_true.reset_index(drop=True) - X).abs().sum(axis=1))
+        X_result = X_result.reset_index(drop=True)
+        return X_result
+
+    def cosine_distance(self, X_true, X):
+        X_result = pd.DataFrame(1 - ((X_true.reset_index(drop=True) * X).sum(axis=1) / (
+                np.sqrt((X ** 2).sum(axis=1)) * np.sqrt((X_true.reset_index(drop=True) ** 2).sum(axis=1)))))
+        X_result = X_result.reset_index(drop=True)
+        return X_result
